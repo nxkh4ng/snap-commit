@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   release:
@@ -32,7 +32,7 @@ jobs:
           CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X github.com/nxkh4ng/snap/cmd.version=$VERSION" -o "build/snap_darwin_arm64/snap"
 
           # Windows
-          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/nxkh4ng/snap/cmd.version=$VERSION" -o "build/snap_windows_x86_64/snap.exe"
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/nxkh4ng/snap/cmd.version=$VERSION" -o "build/snap_windows_amd64/snap.exe"
           CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -ldflags="-s -w -X github.com/nxkh4ng/snap/cmd.version=$VERSION" -o "build/snap_windows_arm64/snap.exe"
 
       - name: Create archives
@@ -42,13 +42,13 @@ jobs:
           # Linux
           tar czf "dist/snap_${VERSION}_linux_amd64.tar.gz" -C build/snap_linux_amd64 snap
           tar czf "dist/snap_${VERSION}_linux_arm64.tar.gz" -C build/snap_linux_arm64 snap
-          
+
           # macOS
           tar czf "dist/snap_${VERSION}_darwin_amd64.tar.gz" -C build/snap_darwin_amd64 snap
           tar czf "dist/snap_${VERSION}_darwin_arm64.tar.gz" -C build/snap_darwin_arm64 snap
 
           # Windows
-          zip -j "dist/snap_${VERSION}_windows_amd64.zip" build/snap_windows_x86_64/snap.exe
+          zip -j "dist/snap_${VERSION}_windows_amd64.zip" build/snap_windows_amd64/snap.exe
           zip -j "dist/snap_${VERSION}_windows_arm64.zip" build/snap_windows_arm64/snap.exe
 
       - name: Generate checksums
@@ -57,8 +57,104 @@ jobs:
           cd dist
           shasum -a 256 *.tar.gz *.zip > "snap_${VERSION}_checksums.txt"
 
+      - name: Parse checksums
+        id: checksums
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd dist
+          echo "darwin_amd64=$(grep darwin_amd64 snap_${VERSION}_checksums.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "darwin_arm64=$(grep darwin_arm64 snap_${VERSION}_checksums.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "linux_amd64=$(grep linux_amd64 snap_${VERSION}_checksums.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "linux_arm64=$(grep linux_arm64 snap_${VERSION}_checksums.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "windows_amd64=$(grep windows_amd64 snap_${VERSION}_checksums.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+          echo "windows_arm64=$(grep windows_arm64 snap_${VERSION}_checksums.txt | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/*
           generate_release_notes: true
+
+      - name: Update Homebrew formula
+        env:
+          GH_TOKEN: ${{ secrets.TOOL_RELEASE_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+
+          git clone https://x-access-token:${{ secrets.TOOL_RELEASE_TOKEN }}@github.com/nxkh4ng/homebrew-tap.git
+          cd homebrew-tap
+
+          cat > Formula/snap-commit.rb << EOF
+          class SnapCommit < Formula
+            desc "A lightweight CLI tool for Conventional Commits"
+            homepage "https://github.com/nxkh4ng/snap-commit"
+            license "MIT"
+
+            on_macos do
+              on_arm do
+                url "https://github.com/nxkh4ng/snap-commit/releases/download/v${VERSION}/snap_${VERSION}_darwin_arm64.tar.gz"
+                sha256 "${{ steps.checksums.outputs.darwin_arm64 }}"
+              end
+              on_intel do
+                url "https://github.com/nxkh4ng/snap-commit/releases/download/v${VERSION}/snap_${VERSION}_darwin_amd64.tar.gz"
+                sha256 "${{ steps.checksums.outputs.darwin_amd64 }}"
+              end
+            end
+
+            on_linux do
+              on_arm do
+                url "https://github.com/nxkh4ng/snap-commit/releases/download/v${VERSION}/snap_${VERSION}_linux_arm64.tar.gz"
+                sha256 "${{ steps.checksums.outputs.linux_arm64 }}"
+              end
+              on_intel do
+                url "https://github.com/nxkh4ng/snap-commit/releases/download/v${VERSION}/snap_${VERSION}_linux_amd64.tar.gz"
+                sha256 "${{ steps.checksums.outputs.linux_amd64 }}"
+              end
+            end
+
+            def install
+              bin.install "snap"
+            end
+          end
+          EOF
+
+          git config user.name "snap-commit bot"
+          git config user.email "actions@github.com"
+          git add Formula/snap-commit.rb
+          git commit -m "chore: update snap-commit to v${VERSION}"
+          git push
+
+      - name: Update Scoop bucket
+        env:
+          GH_TOKEN: ${{ secrets.TOOL_RELEASE_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+
+          git clone https://x-access-token:${{ secrets.TOOL_RELEASE_TOKEN }}@github.com/nxkh4ng/scoop-bucket.git
+          cd scoop-bucket
+
+          cat > bucket/snap-commit.json << EOF
+          {
+            "version": "${VERSION}",
+            "description": "Lightweight CLI tool for Conventional Commits",
+            "homepage": "https://github.com/nxkh4ng/snap-commit",
+            "license": "MIT",
+            "architecture": {
+              "64bit": {
+                "url": "https://github.com/nxkh4ng/snap-commit/releases/download/v${VERSION}/snap_${VERSION}_windows_amd64.zip",
+                "hash": "${{ steps.checksums.outputs.windows_amd64 }}"
+              },
+              "arm64": {
+                "url": "https://github.com/nxkh4ng/snap-commit/releases/download/v${VERSION}/snap_${VERSION}_windows_arm64.zip",
+                "hash": "${{ steps.checksums.outputs.windows_arm64 }}"
+              }
+            },
+            "bin": "snap.exe"
+          }
+          EOF
+
+          git config user.name "snap-commit bot"
+          git config user.email "actions@github.com"
+          git add bucket/snap-commit.json
+          git commit -m "chore: update snap-commit to v${VERSION}"
+          git push
