@@ -1,4 +1,4 @@
-package utils
+package commitmsg
 
 import "testing"
 
@@ -73,7 +73,7 @@ func TestFormatCommitMsg(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := FormatCommitMsg(tt.commitType, tt.scope, tt.summary, tt.description, tt.breakingChange)
+			got := Format(tt.commitType, tt.scope, tt.summary, tt.description, tt.breakingChange)
 			if got != tt.want {
 				t.Errorf("FormatCommitMsg() =\n%q\nwant:\n%q", got, tt.want)
 			}
@@ -146,7 +146,7 @@ func TestParseCommitMsg(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotType, gotScope, gotSummary, gotDesc, gotBC, gotHasBreaking := ParseCommitMsg(tt.msg)
+			gotType, gotScope, gotSummary, gotDesc, gotBC, gotHasBreaking := Parse(tt.msg)
 
 			if gotType != tt.wantCommitType {
 				t.Errorf("commitType = %q, want %q", gotType, tt.wantCommitType)

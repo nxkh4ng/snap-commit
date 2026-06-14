@@ -1,4 +1,4 @@
-package utils
+package git
 
 import (
 	"errors"
@@ -19,19 +19,19 @@ func CheckGitCommitReady() error {
 	err := stagedCmd.Run()
 	if err == nil {
 		return fmt.Errorf("no staged changes to commit, use `git add <file>` to stage your changes")
-	} else {
-		var exitErr *exec.ExitError
-		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
-			return nil
-		}
-		return fmt.Errorf("failed to check staged changes: %w", err)
 	}
+
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+		return nil
+	}
+	return fmt.Errorf("failed to check staged changes: %w", err)
 }
 
 func StageAll() error {
 	addCmd := exec.Command("git", "add", "-u")
 	if err := addCmd.Run(); err != nil {
-		return fmt.Errorf("failed to stage files: %v", err)
+		return fmt.Errorf("failed to stage files: %w", err)
 	}
 	return nil
 }
@@ -40,7 +40,7 @@ func GetLatestCommitMsg() (string, error) {
 	logCmd := exec.Command("git", "log", "-1", "--format=%B")
 	out, err := logCmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to log latest commit: %v", err)
+		return "", fmt.Errorf("failed to log latest commit: %w", err)
 	}
 	return string(out), nil
 }
@@ -55,7 +55,7 @@ func Commit(msg string, amendFlag bool) (string, error) {
 
 	out, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to commit: %v", err)
+		return "", fmt.Errorf("failed to commit: %w", err)
 	}
 	return string(out), nil
 }

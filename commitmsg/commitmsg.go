@@ -1,8 +1,8 @@
-package utils
+package commitmsg
 
 import "strings"
 
-func FormatCommitMsg(commitType, scope, summary, description, breakingChange string) string {
+func Format(commitType, scope, summary, description, breakingChange string) string {
 	var b strings.Builder
 
 	commitType = strings.TrimSpace(commitType)
@@ -44,7 +44,7 @@ func FormatCommitMsg(commitType, scope, summary, description, breakingChange str
 	return b.String()
 }
 
-func ParseCommitMsg(msg string) (commitType, scope, summary, description, breakingChange string, hasBreaking bool) {
+func Parse(msg string) (commitType, scope, summary, description, breakingChange string, hasBreaking bool) {
 	parts := strings.SplitN(msg, "\n\n", 2)
 	header := strings.TrimSpace(parts[0])
 	body := ""

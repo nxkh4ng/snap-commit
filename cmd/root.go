@@ -24,6 +24,7 @@ package cmd
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -31,7 +32,9 @@ import (
 	"unicode/utf8"
 
 	"charm.land/huh/v2"
-	"github.com/nxkh4ng/snap/utils"
+	"github.com/nxkh4ng/snap/commitmsg"
+	"github.com/nxkh4ng/snap/config"
+	"github.com/nxkh4ng/snap/git"
 	"github.com/spf13/cobra"
 )
 
@@ -42,7 +45,7 @@ var (
 Following this conventional commits standard - https://www.conventionalcommits.org/en/v1.0.0/`
 
 	typeMap                            map[string]string
-	validationCfg                      utils.ValidationConfig
+	validationCfg                      config.ValidationConfig
 	typeKeys                           []string
 	summaryMaxLen, scopeMaxLen         int
 	scopeRequired, descriptionRequired bool
@@ -54,7 +57,7 @@ var rootCmd = &cobra.Command{
 	Short: "snap your commits into shape",
 	Long:  longDesc,
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := utils.CheckGitRepo(); err != nil {
+		if err := git.CheckGitRepo(); err != nil {
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
 		}
@@ -67,21 +70,21 @@ var rootCmd = &cobra.Command{
 
 		amendFlag, _ := cmd.Flags().GetBool("amend")
 		if amendFlag {
-			latestMsg, err := utils.GetLatestCommitMsg()
+			latestMsg, err := git.GetLatestCommitMsg()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%v\n", err)
 				os.Exit(1)
 			}
-			commit, scope, summary, description, breakingChange, _ = utils.ParseCommitMsg(latestMsg)
+			commit, scope, summary, description, breakingChange, _ = commitmsg.Parse(latestMsg)
 		} else {
 			autoStageFlag, _ := cmd.Flags().GetBool("all")
 			if autoStageFlag {
-				if err := utils.StageAll(); err != nil {
+				if err := git.StageAll(); err != nil {
 					fmt.Fprintf(os.Stderr, "%v\n", err)
 					os.Exit(1)
 				}
 			} else {
-				if err := utils.CheckGitCommitReady(); err != nil {
+				if err := git.CheckGitCommitReady(); err != nil {
 					fmt.Fprintf(os.Stderr, "%v\n", err)
 					os.Exit(1)
 				}
@@ -191,7 +194,7 @@ var rootCmd = &cobra.Command{
 			fmt.Fprintf(os.Stderr, "%v\n", err)
 			os.Exit(1)
 		}
-		msg = utils.FormatCommitMsg(commit, scope, summary, description, breakingChange)
+		msg = commitmsg.Format(commit, scope, summary, description, breakingChange)
 
 		cf := huh.NewForm(
 			huh.NewGroup(
@@ -213,7 +216,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		if confirm {
-			output, err := utils.Commit(msg, amendFlag)
+			output, err := git.Commit(msg, amendFlag)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%v\n", err)
 				os.Exit(1)
@@ -246,15 +249,11 @@ func init() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	cfg := resolveConfig(cfgFile)
-	loaded := utils.LoadConfig(cfg)
+	loaded := config.LoadConfig(cfg)
 	typeMap = loaded.CommitTypes
 	validationCfg = loaded.Validations
 
-	typeKeys = make([]string, 0, len(typeMap))
-	for key := range typeMap {
-		typeKeys = append(typeKeys, key)
-	}
-	slices.Sort(typeKeys)
+	typeKeys = slices.Sorted(maps.Keys(typeMap))
 
 	summaryMaxLen = loaded.Validations.SummaryMaxLen
 	scopeMaxLen = loaded.Validations.ScopeMaxLen
