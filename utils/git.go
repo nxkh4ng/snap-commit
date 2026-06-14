@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 )
@@ -19,11 +20,12 @@ func CheckGitCommitReady() error {
 	if err == nil {
 		return fmt.Errorf("no staged changes to commit, use `git add <file>` to stage your changes")
 	} else {
-		if err.Error() != "exit status 1" {
-			return fmt.Errorf("failed to check staged changes: %v", err)
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && exitErr.ExitCode() == 1 {
+			return nil
 		}
+		return fmt.Errorf("failed to check staged changes: %w", err)
 	}
-	return nil
 }
 
 func StageAll() error {
