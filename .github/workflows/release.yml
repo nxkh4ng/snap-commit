@@ -76,8 +76,6 @@ jobs:
           generate_release_notes: true
 
       - name: Update Homebrew formula
-        env:
-          GH_TOKEN: ${{ secrets.TOOL_RELEASE_TOKEN }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
 
@@ -118,15 +116,13 @@ jobs:
           end
           EOF
 
-          git config user.name "snap-commit bot"
-          git config user.email "actions@github.com"
+          git config user.name "Nguyễn Xuân Khang"
+          git config user.email "nxkh4ng@users.noreply.github.com"
           git add Formula/snap-commit.rb
           git commit -m "chore: update snap-commit to v${VERSION}"
           git push
 
       - name: Update Scoop bucket
-        env:
-          GH_TOKEN: ${{ secrets.TOOL_RELEASE_TOKEN }}
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
 
@@ -153,8 +149,8 @@ jobs:
           }
           EOF
 
-          git config user.name "snap-commit bot"
-          git config user.email "actions@github.com"
+          git config user.name "Nguyễn Xuân Khang"
+          git config user.email "nxkh4ng@users.noreply.github.com"
           git add bucket/snap-commit.json
           git commit -m "chore: update snap-commit to v${VERSION}"
           git push

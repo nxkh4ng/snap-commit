@@ -1,5 +1,5 @@
 ![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go)
-![Release](https://img.shields.io/badge/release-v0.4.0-teal?style=flat-square)
+![Release](https://img.shields.io/github/v/release/nxkh4ng/snap-commit?style=flat-square&label=release&color=teal)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)
 
 # snap-commit
@@ -26,9 +26,23 @@
 
 ## Installation
 
-### Option 1: Go
+### Homebrew (macOS / Linux)
 
-Install with Go 1.21+
+```bash
+brew tap nxkh4ng/homebrew-tap
+brew install snap-commit
+```
+
+### Scoop (Windows)
+
+```powershell
+scoop bucket add nxkh4ng https://github.com/nxkh4ng/scoop-bucket
+scoop install snap-commit
+```
+
+### Go
+
+Install with [Go](https://go.dev/dl/) 1.21+
 
 ```bash
 go install github.com/nxkh4ng/snap@latest
@@ -37,7 +51,7 @@ go install github.com/nxkh4ng/snap@latest
 > [!IMPORTANT]
 > Make sure your `$GOPATH/bin` (or `%USERPROFILE%\go\bin` on Windows) is in your `PATH`
 
-### Option 2: Download binary
+### Download binary
 
 1. Download the ZIP file for your OS from [GitHub Releases](https://github.com/nxkh4ng/snap-commit/releases)
 2. Extract the archive
@@ -136,6 +150,22 @@ require_description = false
 ---
 
 ## Uninstall
+
+### Homebrew (macOS / Linux)
+
+```bash
+brew uninstall snap-commit
+brew untap nxkh4ng/tap
+```
+
+### Scoop (Windows)
+
+```powershell
+scoop uninstall snap-commit
+scoop bucket rm nxkh4ng
+```
+
+### Manual (Go install or Binary)
 
 ```bash
 # macOS / Linux
