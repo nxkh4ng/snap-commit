@@ -39,9 +39,7 @@ go install github.com/nxkh4ng/snap@latest
 
 ### Option 2: Download binary
 
-1. Download the ZIP file for your OS from:
-   - [GitHub Releases](https://github.com/nxkh4ng/snap-commit/releases)
-   - [Codeberg Releases](https://codeberg.org/nxkh4ng/snap-commit/releases)
+1. Download the ZIP file for your OS from [GitHub Releases](https://github.com/nxkh4ng/snap-commit/releases)
 2. Extract the archive
 3. Move `snap` (or `snap.exe` on Windows) to a folder in your `PATH`
 

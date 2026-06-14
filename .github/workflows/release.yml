@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build all platforms
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir -p dist build
+
+          # Linux
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X github.com/nxkh4ng/snap/cmd.version=$VERSION" -o "build/snap_linux_amd64/snap"
+          CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -ldflags="-s -w -X github.com/nxkh4ng/snap/cmd.version=$VERSION" -o "build/snap_linux_arm64/snap"
+
+          # macOS
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X github.com/nxkh4ng/snap/cmd.version=$VERSION" -o "build/snap_darwin_amd64/snap"
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X github.com/nxkh4ng/snap/cmd.version=$VERSION" -o "build/snap_darwin_arm64/snap"
+
+          # Windows
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -X github.com/nxkh4ng/snap/cmd.version=$VERSION" -o "build/snap_windows_x86_64/snap.exe"
+          CGO_ENABLED=0 GOOS=windows GOARCH=arm64 go build -ldflags="-s -w -X github.com/nxkh4ng/snap/cmd.version=$VERSION" -o "build/snap_windows_arm64/snap.exe"
+
+      - name: Create archives
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+
+          # Linux
+          tar czf "dist/snap_${VERSION}_linux_amd64.tar.gz" -C build/snap_linux_amd64 snap
+          tar czf "dist/snap_${VERSION}_linux_arm64.tar.gz" -C build/snap_linux_arm64 snap
+          
+          # macOS
+          tar czf "dist/snap_${VERSION}_darwin_amd64.tar.gz" -C build/snap_darwin_amd64 snap
+          tar czf "dist/snap_${VERSION}_darwin_arm64.tar.gz" -C build/snap_darwin_arm64 snap
+
+          # Windows
+          zip -j "dist/snap_${VERSION}_windows_amd64.zip" build/snap_windows_x86_64/snap.exe
+          zip -j "dist/snap_${VERSION}_windows_arm64.zip" build/snap_windows_arm64/snap.exe
+
+      - name: Generate checksums
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd dist
+          shasum -a 256 *.tar.gz *.zip > "snap_${VERSION}_checksums.txt"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
