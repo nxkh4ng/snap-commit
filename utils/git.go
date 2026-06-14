@@ -36,7 +36,7 @@ func StageAll() error {
 	return nil
 }
 
-func GetTheLatestCommitMsg() (string, error) {
+func GetLatestCommitMsg() (string, error) {
 	logCmd := exec.Command("git", "log", "-1", "--format=%B")
 	out, err := logCmd.Output()
 	if err != nil {

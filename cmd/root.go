@@ -42,7 +42,7 @@ var (
 Following this conventional commits standard - https://www.conventionalcommits.org/en/v1.0.0/`
 
 	typeMap                            map[string]string
-	validations                        utils.ValidationConfig
+	validationCfg                      utils.ValidationConfig
 	typeKeys                           []string
 	summaryMaxLen, scopeMaxLen         int
 	scopeRequired, descriptionRequired bool
@@ -67,7 +67,7 @@ var rootCmd = &cobra.Command{
 
 		amendFlag, _ := cmd.Flags().GetBool("amend")
 		if amendFlag {
-			latestMsg, err := utils.GetTheLatestCommitMsg()
+			latestMsg, err := utils.GetLatestCommitMsg()
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "%v\n", err)
 				os.Exit(1)
@@ -262,15 +262,15 @@ func initConfig() {
 
 	viper.AutomaticEnv() // read in environment variables that match
 
-	typeMap, validations = utils.LoadConfig()
+	typeMap, validationCfg = utils.LoadConfig()
 	typeKeys = make([]string, 0, len(typeMap))
 	for key := range typeMap {
 		typeKeys = append(typeKeys, key)
 	}
 	slices.Sort(typeKeys)
 
-	summaryMaxLen = validations.SummaryMaxLen
-	scopeMaxLen = validations.ScopeMaxLen
-	scopeRequired = validations.ScopeRequired
-	descriptionRequired = validations.DescriptionRequired
+	summaryMaxLen = validationCfg.SummaryMaxLen
+	scopeMaxLen = validationCfg.ScopeMaxLen
+	scopeRequired = validationCfg.ScopeRequired
+	descriptionRequired = validationCfg.DescriptionRequired
 }
