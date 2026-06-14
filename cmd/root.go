@@ -25,6 +25,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"unicode/utf8"
@@ -32,7 +33,6 @@ import (
 	"charm.land/huh/v2"
 	"github.com/nxkh4ng/snap/utils"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -245,32 +245,43 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
+	cfg := resolveConfig(cfgFile)
+	loaded := utils.LoadConfig(cfg)
+	typeMap = loaded.CommitTypes
+	validationCfg = loaded.Validations
 
-		// Search config in home directory with name ".snap" (without extension).
-		viper.AddConfigPath(".")
-		viper.AddConfigPath(home)
-		viper.SetConfigType("toml")
-		viper.SetConfigName(".snap")
-	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	typeMap, validationCfg = utils.LoadConfig()
 	typeKeys = make([]string, 0, len(typeMap))
 	for key := range typeMap {
 		typeKeys = append(typeKeys, key)
 	}
 	slices.Sort(typeKeys)
 
-	summaryMaxLen = validationCfg.SummaryMaxLen
-	scopeMaxLen = validationCfg.ScopeMaxLen
-	scopeRequired = validationCfg.ScopeRequired
-	descriptionRequired = validationCfg.DescriptionRequired
+	summaryMaxLen = loaded.Validations.SummaryMaxLen
+	scopeMaxLen = loaded.Validations.ScopeMaxLen
+	scopeRequired = loaded.Validations.ScopeRequired
+	descriptionRequired = loaded.Validations.DescriptionRequired
+}
+
+func resolveConfig(cfgFile string) string {
+	cfgName := ".snap.toml"
+
+	if cfgFile != "" {
+		return cfgFile
+	}
+
+	if _, err := os.Stat(cfgName); err == nil {
+		return cfgName
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return cfgName
+	}
+
+	homePath := filepath.Join(home, cfgName)
+	if _, err := os.Stat(homePath); err == nil {
+		return homePath
+	}
+
+	return cfgName
 }
