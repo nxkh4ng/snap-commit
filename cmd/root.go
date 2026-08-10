@@ -29,7 +29,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"unicode/utf8"
 
 	"charm.land/huh/v2"
 	"github.com/nxkh4ng/snap/commitmsg"
@@ -140,10 +139,6 @@ var rootCmd = &cobra.Command{
 						if err := huh.ValidateMinLength(1)(input); err != nil && scopeRequired {
 							return fmt.Errorf("scope is required")
 						}
-						if utf8.RuneCountInString(input) > scopeMaxLen {
-							current := utf8.RuneCountInString(scope)
-							return fmt.Errorf("scope must be at most %d characters long - current: %d", scopeMaxLen, current)
-						}
 						return nil
 					}),
 
@@ -152,10 +147,6 @@ var rootCmd = &cobra.Command{
 					Validate(func(input string) error {
 						if err := huh.ValidateMinLength(1)(input); err != nil {
 							return fmt.Errorf("summary cannot be empty")
-						}
-						if utf8.RuneCountInString(input) > summaryMaxLen {
-							current := utf8.RuneCountInString(summary)
-							return fmt.Errorf("summary must be at most %d characters long - current: %d", summaryMaxLen, current)
 						}
 						return nil
 					}),
@@ -255,8 +246,6 @@ func initConfig() {
 
 	typeKeys = slices.Sorted(maps.Keys(typeMap))
 
-	summaryMaxLen = loaded.Validations.SummaryMaxLen
-	scopeMaxLen = loaded.Validations.ScopeMaxLen
 	scopeRequired = loaded.Validations.ScopeRequired
 	descriptionRequired = loaded.Validations.DescriptionRequired
 }

@@ -21,8 +21,6 @@ var DefaultCommitTypes = map[string]string{
 }
 
 type ValidationConfig struct {
-	SummaryMaxLen       int
-	ScopeMaxLen         int
 	ScopeRequired       bool
 	DescriptionRequired bool
 }
@@ -35,10 +33,6 @@ type Config struct {
 func LoadConfig(path string) Config {
 	cfg := Config{
 		CommitTypes: DefaultCommitTypes,
-		Validations: ValidationConfig{
-			SummaryMaxLen: 60,
-			ScopeMaxLen:   30,
-		},
 	}
 
 	data, err := os.ReadFile(path)

@@ -131,8 +131,6 @@ revert = "Reverts a previous commit"
 
 # Validation rules
 [validations]
-summary_max_length = 60
-scope_max_length = 30
 require_scope = false
 require_description = false
 ```
@@ -142,8 +140,6 @@ require_description = false
 | Option                | Type | Default  | Description                |
 | --------------------- | ---- | -------- | -------------------------- |
 | `commit_types`        | map  | 11 types | Commit types               |
-| `summary_max_length`  | int  | 60       | Max characters for summary |
-| `scope_max_length`    | int  | 30       | Max characters for scope   |
 | `require_scope`       | bool | false    | Make scope mandatory       |
 | `require_description` | bool | false    | Make description mandatory |
 
